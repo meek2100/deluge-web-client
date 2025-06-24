@@ -1,9 +1,11 @@
 import base64
-import pytest
 from pathlib import Path
-from tests import MockResponse, example_status_dict, example_multi_status_dict
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
+
 from deluge_web_client import DelugeWebClientError
+from tests import MockResponse, example_multi_status_dict, example_status_dict
 
 
 def test_upload_torrent(client_mock):
@@ -407,6 +409,15 @@ def test_remove_torrent(client_mock):
             ok=True,
             status_code=200,
         ),
+        MockResponse(
+            {
+                "result": None,
+                "error": None,
+                "id": 2,
+            },
+            ok=True,
+            status_code=200,
+        ),
     )
 
     response = client.remove_torrent("mock_torrent_id")
@@ -416,17 +427,33 @@ def test_remove_torrent(client_mock):
     assert mock_post.called
     assert mock_post.call_count == 1
     assert mock_post.call_args[1]["json"]["method"] == "core.remove_torrent"
+    assert mock_post.call_args[1]["json"]["params"] == ["mock_torrent_id", False]
+
+    # Second call: remove_data=True
+    response = client.remove_torrent("mock_torrent_id", remove_data=True)
+    assert response.id == 2
+    assert mock_post.call_args[1]["json"]["params"] == ["mock_torrent_id", True]
 
 
 def test_remove_torrents(client_mock):
     client, mock_post = client_mock
 
+    # Provide two responses for two calls
     mock_post.side_effect = (
         MockResponse(
             {
                 "result": None,
                 "error": None,
                 "id": 1,
+            },
+            ok=True,
+            status_code=200,
+        ),
+        MockResponse(
+            {
+                "result": None,
+                "error": None,
+                "id": 2,
             },
             ok=True,
             status_code=200,
@@ -440,6 +467,19 @@ def test_remove_torrents(client_mock):
     assert mock_post.called
     assert mock_post.call_count == 1
     assert mock_post.call_args[1]["json"]["method"] == "core.remove_torrents"
+    assert mock_post.call_args[1]["json"]["params"] == [
+        ["mock_torrent_id1", "mock_torrent_id2"],
+        False,
+    ]
+
+    response = client.remove_torrents(
+        ["mock_torrent_id1", "mock_torrent_id2"], remove_data=True
+    )
+    assert response.id == 2
+    assert mock_post.call_args[1]["json"]["params"] == [
+        ["mock_torrent_id1", "mock_torrent_id2"],
+        True,
+    ]
 
 
 def test_resume_torrent(client_mock):
