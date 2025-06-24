@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "deluge-web-client"
-version = "1.0.4"
+version = "1.0.5"
 description = "Deluge Web Client"
 authors = ["jlw_4049 <jessielw4049@gmail.com>"]
 maintainers = ["jlw_4049 <jessielw4049@gmail.com>"]
@@ -42,7 +42,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.9"
-requests = "^2.32.3"
+niquests = "^3.14.1"
 
 
 [tool.poetry.group.dev.dependencies]

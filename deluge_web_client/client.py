@@ -4,7 +4,7 @@ from os import PathLike
 from pathlib import Path
 from typing import Any, Optional, Union
 
-import requests
+import niquests
 
 from deluge_web_client.exceptions import DelugeWebClientError
 from deluge_web_client.response import Response
@@ -16,7 +16,7 @@ class DelugeWebClient:
     ID = 0
 
     def __init__(self, url: str = "", password: str = "") -> None:
-        self.session = requests.Session()
+        self.session = niquests.Session()
         self.url = self._build_url(url)
         self.password = password
 
