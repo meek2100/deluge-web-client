@@ -1,9 +1,10 @@
 import base64
-import requests
 from collections.abc import Iterable
 from os import PathLike
 from pathlib import Path
-from typing import Union, Optional, Any
+from typing import Any, Optional, Union
+
+import requests
 
 from deluge_web_client.exceptions import DelugeWebClientError
 from deluge_web_client.response import Response
@@ -534,20 +535,24 @@ class DelugeWebClient:
         }
         return self.execute_call(payload, timeout=timeout)
 
-    def remove_torrent(self, torrent_id: str, timeout: int = 30) -> Response:
+    def remove_torrent(
+        self, torrent_id: str, remove_data: bool = False, timeout: int = 30
+    ) -> Response:
         """Removes a specific torrent"""
         payload = {
             "method": "core.remove_torrent",
-            "params": [torrent_id],
+            "params": [torrent_id, remove_data],
             "id": self.ID,
         }
         return self.execute_call(payload, timeout=timeout)
 
-    def remove_torrents(self, torrent_ids: list, timeout: int = 30) -> Response:
+    def remove_torrents(
+        self, torrent_ids: list, remove_data: bool = False, timeout: int = 30
+    ) -> Response:
         """Removes a list of torrents"""
         payload = {
             "method": "core.remove_torrents",
-            "params": [torrent_ids],
+            "params": [torrent_ids, remove_data],
             "id": self.ID,
         }
         return self.execute_call(payload, timeout=timeout)
