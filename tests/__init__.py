@@ -2,7 +2,7 @@ from typing import Optional
 
 
 class MockResponse:
-    """Mock to simulate a requests.Response object"""
+    """Mock to simulate a niquests.Response object"""
 
     def __init__(
         self,

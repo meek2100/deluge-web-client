@@ -6,7 +6,7 @@ from deluge_web_client import DelugeWebClient
 @pytest.fixture
 def client_mock():
     """Fixture to initialize DelugeWebClient and mock its session."""
-    with patch("requests.Session.post") as mock_post:
+    with patch("niquests.Session.post") as mock_post:
         client = DelugeWebClient(
             url="http://mocked-deluge-url", password="mocked_password"
         )

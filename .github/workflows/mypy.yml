@@ -24,7 +24,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install mypy
-          pip install types-requests==2.32.0.20240914
           pip install types-pygments==2.18.0.20240506
 
       - name: Run mypy
