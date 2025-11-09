@@ -9,15 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
--
+- Added `TorrentOptions` for fine grained control of torrents _(replacement for `ParamArgs`)_.
 
 ### Changed
 
--
+- Swap from **Poetry** to **uv**.
 
 ### Removed
 
--
+- `ParamArgs` _(replaced with `TorrentOptions`)_.
 
 ### Fixed
 
