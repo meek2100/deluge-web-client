@@ -15,6 +15,15 @@ from deluge_web_client.schema import Response, TorrentOptions
 class DelugeWebClient:
     HEADERS = {"Content-Type": "application/json", "Accept": "application/json"}
 
+    __slots__ = (
+        "session",
+        "url",
+        "password",
+        "daemon_port",
+        "_base_url",
+        "_request_id",
+    )
+
     def __init__(self, url: str, password: str, daemon_port: int = 58846) -> None:
         self.session = niquests.Session()
         self.url = self._build_url(url)
