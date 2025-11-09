@@ -5,3 +5,4 @@ testing.py
 dist
 .coverage
 htmlcov
+*egg-info
