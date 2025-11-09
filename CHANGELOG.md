@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `TorrentOptions` for fine grained control of torrents _(replacement for `ParamArgs`)_.
+  - This allows for complete control of what happens to your torrent during upload.
 - `DelugeWebClient`:
   - Arg for `daemon_port` that defaults to **58846**.
   - Method `start_daemon`.
