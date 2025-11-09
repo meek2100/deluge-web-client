@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
-from tests import MockResponse
+
+import pytest
+
 from deluge_web_client import DelugeWebClientError
+from tests import MockResponse
 
 
 def test_enter(client_mock):
@@ -241,5 +243,7 @@ def test_execute_call_with_error(client_mock):
             status_code=200,
         ),
     ):
-        with pytest.raises(DelugeWebClientError, match="Payload:"):
+        with pytest.raises(
+            DelugeWebClientError, match="RPC Error - Method: core.add_torrent_file"
+        ):
             client.execute_call(payload)

@@ -1,4 +1,5 @@
 import pytest
+
 from deluge_web_client import TorrentState
 
 

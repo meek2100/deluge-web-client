@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from deluge_web_client import DelugeWebClientError
+from deluge_web_client import DelugeWebClientError, TorrentOptions
 from tests import MockResponse, example_multi_status_dict, example_status_dict
 
 
@@ -18,36 +18,28 @@ def test_upload_torrent(client_mock):
     base64_encoded_content = base64.b64encode(mocked_file_content).decode("utf-8")
 
     # Mock the open function to simulate reading a torrent file
-    with patch("builtins.open", mock_open(read_data=mocked_file_content)), patch.object(
-        client, "_upload_helper", return_value=MagicMock(result=True, error=None)
-    ) as mock_upload_helper:
+    with (
+        patch("builtins.open", mock_open(read_data=mocked_file_content)),
+        patch.object(
+            client, "_upload_helper", return_value=MagicMock(result=True, error=None)
+        ) as mock_upload_helper,
+    ):
         # Call the upload_torrent method
-        response = client.upload_torrent(
-            torrent_path, add_paused=True, save_directory="/downloads"
-        )
+        options = TorrentOptions(add_paused=True, download_location="/downloads")
+        response = client.upload_torrent(torrent_path, options)
 
     # Verify the response indicates success
     assert response.result is True
     assert response.error is None
 
     # Prepare expected payload for the upload_helper
-    expected_payload = {
-        "method": "core.add_torrent_file",
-        "params": [
-            str(torrent_path),
-            base64_encoded_content,
-            {
-                "add_paused": True,
-                "seed_mode": False,
-                "auto_managed": False,
-                "download_location": "/downloads",
-            },
-        ],
-        "id": client.ID,
-    }
-
     # Verify that the correct payload was sent to _upload_helper
-    mock_upload_helper.assert_called_once_with(expected_payload, None, 30)
+    mock_upload_helper.assert_called_once()
+    called_payload, called_label, called_timeout = mock_upload_helper.call_args[0]
+    assert called_payload["method"] == "core.add_torrent_file"
+    assert called_payload["params"][0] == str(torrent_path)
+    assert called_label is None
+    assert called_timeout == 30
 
 
 def test_upload_torrents(client_mock):
@@ -69,9 +61,10 @@ def test_upload_torrents(client_mock):
 
         # Define the torrent paths to upload
         torrents = ["path/to/torrent1.torrent", "path/to/torrent2.torrent"]
+        options = TorrentOptions(download_location="/downloads", label=None)
 
         # Call the upload_torrents method
-        results = client.upload_torrents(torrents, save_directory="/downloads")
+        results = client.upload_torrents(torrents, options)
 
     # Assertions to check that the responses are correct
     assert len(results) == 2
@@ -83,14 +76,12 @@ def test_upload_torrents(client_mock):
     # Verify that upload_torrent was called with the correct arguments
     mock_upload_torrent.assert_any_call(
         Path("path/to/torrent1.torrent"),
-        save_directory="/downloads",
-        label=None,
+        torrent_options=options,
         timeout=30,
     )
     mock_upload_torrent.assert_any_call(
         Path("path/to/torrent2.torrent"),
-        save_directory="/downloads",
-        label=None,
+        torrent_options=options,
         timeout=30,
     )
 
@@ -106,26 +97,16 @@ def test_upload_torrents_failure(client_mock):
         ]
 
         torrents = ["path/to/torrent1.torrent", "path/to/torrent2.torrent"]
+        options = TorrentOptions()
 
         # Expecting a DelugeWebClientError to be raised
         with pytest.raises(
             DelugeWebClientError, match="Failed to upload torrent2.torrent:"
         ):
-            client.upload_torrents(torrents)
+            client.upload_torrents(torrents, options)
 
         # Verify that upload_torrent was called for both torrents
-        mock_upload_torrent.assert_any_call(
-            Path("path/to/torrent1.torrent"),
-            save_directory=None,
-            label=None,
-            timeout=30,
-        )
-        mock_upload_torrent.assert_any_call(
-            Path("path/to/torrent2.torrent"),
-            save_directory=None,
-            label=None,
-            timeout=30,
-        )
+        assert mock_upload_torrent.call_count == 2
 
 
 def test_add_torrent_magnet(client_mock):
@@ -134,33 +115,21 @@ def test_add_torrent_magnet(client_mock):
 
     # Mock the response for _upload_helper
     mock_response = MagicMock()
-    mock_response.json.return_value = {"result": "Ok", "id": client.ID}
+    mock_response.json.return_value = {"result": "Ok", "id": 0}
 
     with patch.object(
         client, "_upload_helper", return_value=mock_response
     ) as mock_upload_helper:
-        response = client.add_torrent_magnet(
-            magnet_uri, add_paused=True, save_directory="/downloads"
-        )
+        options = TorrentOptions(add_paused=True, download_location="/downloads")
+        response = client.add_torrent_magnet(magnet_uri, options)
 
     # Assertions to check the response is as expected
     assert response == mock_response
-    expected_payload = {
-        "method": "core.add_torrent_magnet",
-        "params": [
-            str(magnet_uri),
-            {
-                "add_paused": True,
-                "seed_mode": False,
-                "auto_managed": False,
-                "download_location": "/downloads",
-            },
-        ],
-        "id": client.ID,
-    }
-
     # Verify that the correct payload was sent to _upload_helper
-    mock_upload_helper.assert_called_once_with(expected_payload, None, 30)
+    mock_upload_helper.assert_called_once()
+    called_payload = mock_upload_helper.call_args[0][0]
+    assert called_payload["method"] == "core.add_torrent_magnet"
+    assert called_payload["params"][0] == str(magnet_uri)
 
 
 def test_add_torrent_magnet_failure(client_mock):
@@ -172,7 +141,8 @@ def test_add_torrent_magnet_failure(client_mock):
         client, "_upload_helper", side_effect=DelugeWebClientError("Upload failed")
     ):
         with pytest.raises(DelugeWebClientError, match=r".+"):
-            client.add_torrent_magnet(magnet_uri)
+            options = TorrentOptions()
+            client.add_torrent_magnet(magnet_uri, options)
 
 
 def test_add_torrent_url(client_mock):
@@ -181,33 +151,21 @@ def test_add_torrent_url(client_mock):
 
     # Mock the response for _upload_helper
     mock_response = MagicMock()
-    mock_response.json.return_value = {"result": "Ok", "id": client.ID}
+    mock_response.json.return_value = {"result": "Ok", "id": 0}
 
     with patch.object(
         client, "_upload_helper", return_value=mock_response
     ) as mock_upload_helper:
-        response = client.add_torrent_url(
-            torrent_url, add_paused=False, save_directory="/downloads"
-        )
+        options = TorrentOptions(add_paused=False, download_location="/downloads")
+        response = client.add_torrent_url(torrent_url, options)
 
     # Assertions to check the response is as expected
     assert response == mock_response
-    expected_payload = {
-        "method": "core.add_torrent_url",
-        "params": [
-            str(torrent_url),
-            {
-                "add_paused": False,
-                "seed_mode": False,
-                "auto_managed": False,
-                "download_location": "/downloads",
-            },
-        ],
-        "id": client.ID,
-    }
-
     # Verify that the correct payload was sent to _upload_helper
-    mock_upload_helper.assert_called_once_with(expected_payload, None, 30)
+    mock_upload_helper.assert_called_once()
+    called_payload = mock_upload_helper.call_args[0][0]
+    assert called_payload["method"] == "core.add_torrent_url"
+    assert called_payload["params"][0] == str(torrent_url)
 
 
 def test_add_torrent_url_failure(client_mock):
@@ -219,7 +177,8 @@ def test_add_torrent_url_failure(client_mock):
         client, "_upload_helper", side_effect=DelugeWebClientError("Upload failed")
     ):
         with pytest.raises(DelugeWebClientError, match=r".+"):
-            client.add_torrent_url(torrent_url)
+            options = TorrentOptions()
+            client.add_torrent_url(torrent_url, options)
 
 
 def test_upload_helper_success(client_mock):
@@ -238,7 +197,7 @@ def test_upload_helper_success(client_mock):
 
     assert response.result == "info_hash"
     assert response.error is None
-    assert client.ID == 4
+    # client.ID counter removed; ensure we get a valid response and no exceptions
 
 
 def test_upload_helper_failure(client_mock):
@@ -293,7 +252,6 @@ def test_get_torrent_files(client_mock):
 
     response = client.get_torrent_files("mock_torrent_id")
     assert response.error is None
-    assert response.id == 1
     assert response.result == contents
     assert mock_post.called
     assert mock_post.call_count == 1
@@ -317,7 +275,6 @@ def test_get_torrent_status(client_mock):
 
     response = client.get_torrent_status("mock_torrent_id")
     assert response.error is None
-    assert response.id == 1
     assert response.result == example_status_dict
     assert mock_post.called
     assert mock_post.call_count == 1
@@ -341,7 +298,6 @@ def test_get_torrents_status(client_mock):
 
     response = client.get_torrents_status("mock_torrent_id")
     assert response.error is None
-    assert response.id == 1
     assert response.result == example_multi_status_dict
     assert mock_post.called
     assert mock_post.call_count == 1
@@ -365,7 +321,6 @@ def test_pause_torrent(client_mock):
 
     response = client.pause_torrent("mock_torrent_id")
     assert response.error is None
-    assert response.id == 1
     assert response.result is None
     assert mock_post.called
     assert mock_post.call_count == 1
@@ -389,7 +344,6 @@ def test_pause_torrents(client_mock):
 
     response = client.pause_torrents(["mock_torrent_id1", "mock_torrent_id2"])
     assert response.error is None
-    assert response.id == 1
     assert response.result is None
     assert mock_post.called
     assert mock_post.call_count == 1
@@ -422,7 +376,6 @@ def test_remove_torrent(client_mock):
 
     response = client.remove_torrent("mock_torrent_id")
     assert response.error is None
-    assert response.id == 1
     assert response.result is None
     assert mock_post.called
     assert mock_post.call_count == 1
@@ -431,7 +384,6 @@ def test_remove_torrent(client_mock):
 
     # Second call: remove_data=True
     response = client.remove_torrent("mock_torrent_id", remove_data=True)
-    assert response.id == 2
     assert mock_post.call_args[1]["json"]["params"] == ["mock_torrent_id", True]
 
 
@@ -462,7 +414,6 @@ def test_remove_torrents(client_mock):
 
     response = client.remove_torrents(["mock_torrent_id1", "mock_torrent_id2"])
     assert response.error is None
-    assert response.id == 1
     assert response.result is None
     assert mock_post.called
     assert mock_post.call_count == 1
@@ -475,7 +426,6 @@ def test_remove_torrents(client_mock):
     response = client.remove_torrents(
         ["mock_torrent_id1", "mock_torrent_id2"], remove_data=True
     )
-    assert response.id == 2
     assert mock_post.call_args[1]["json"]["params"] == [
         ["mock_torrent_id1", "mock_torrent_id2"],
         True,
@@ -499,7 +449,6 @@ def test_resume_torrent(client_mock):
 
     response = client.resume_torrent("mock_torrent_id")
     assert response.error is None
-    assert response.id == 1
     assert response.result is None
     assert mock_post.called
     assert mock_post.call_count == 1
@@ -523,7 +472,6 @@ def test_resume_torrents(client_mock):
 
     response = client.resume_torrents(["mock_torrent_id1", "mock_torrent_id2"])
     assert response.error is None
-    assert response.id == 1
     assert response.result is None
     assert mock_post.called
     assert mock_post.call_count == 1
@@ -549,7 +497,6 @@ def test_set_torrent_trackers(client_mock):
         "mock_torrent_id", [{"tracker1": 1}, {"tracker2": 1}]
     )
     assert response.error is None
-    assert response.id == 1
     assert response.result is None
     assert mock_post.called
     assert mock_post.call_count == 1

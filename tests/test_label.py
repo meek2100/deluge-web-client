@@ -1,7 +1,9 @@
-import pytest
-from tests import MockResponse
 from unittest.mock import MagicMock
+
+import pytest
+
 from deluge_web_client import DelugeWebClientError
+from tests import MockResponse
 
 
 def test_get_labels(client_mock):

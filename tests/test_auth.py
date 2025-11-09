@@ -1,7 +1,9 @@
-import pytest
-from tests import MockResponse
 from unittest.mock import MagicMock
+
+import pytest
+
 from deluge_web_client import DelugeWebClientError, Response
+from tests import MockResponse
 
 
 def test_failure_to_connect(client_mock):
@@ -13,7 +15,7 @@ def test_failure_to_connect(client_mock):
 
     with pytest.raises(
         DelugeWebClientError,
-        match="Failed to execute call. Response code: 404. Reason: Not Found",
+        match="HTTP Error - Status: 404, Reason: Not Found",
     ):
         client.login()
 
@@ -22,29 +24,25 @@ def test_successful_login_and_host_connection(client_mock):
     client, _ = client_mock
 
     # Mock execute_call for login
-    client._attempt_login = MagicMock(
-        return_value=Response(result=True, error=None, id=None)
-    )
+    client._attempt_login = MagicMock(return_value=Response(result=True, error=None))
 
     # Mock check_connected to simulate not being connected initially, and then connected after host connection
     client.check_connected = MagicMock(
         side_effect=[
             # Not connected yet
-            Response(result=False, error=None, id=None),
+            Response(result=False, error=None),
             # Connected after host connection
-            Response(result=True, error=None, id=None),
+            Response(result=True, error=None),
         ]
     )
 
     # Mock get_hosts to return a list of hosts
     client.get_hosts = MagicMock(
-        return_value=Response(result=[["host_id_1"]], error=None, id=None)
+        return_value=Response(result=[["host_id_1"]], error=None)
     )
 
     # Mock connect_to_host to simulate successful host connection
-    client.connect_to_host = MagicMock(
-        return_value=Response(result=True, error=None, id=None)
-    )
+    client.connect_to_host = MagicMock(return_value=Response(result=True, error=None))
 
     # Call the login method
     response = client.login()
@@ -71,9 +69,7 @@ def test_login_failure(client_mock):
     client, mock_post = client_mock
 
     # Mock the login attempt to return a failure response
-    client._attempt_login = MagicMock(
-        return_value=Response(result=False, error=None, id=None)
-    )
+    client._attempt_login = MagicMock(return_value=Response(result=False, error=None))
 
     # Call the login method
     response = client.login()
@@ -90,12 +86,8 @@ def test_already_connected(client_mock):
     client, mock_post = client_mock
 
     # Mock login success and already connected response
-    client._attempt_login = MagicMock(
-        return_value=Response(result=True, error=None, id=None)
-    )
-    client.check_connected = MagicMock(
-        return_value=Response(result=True, error=None, id=None)
-    )
+    client._attempt_login = MagicMock(return_value=Response(result=True, error=None))
+    client.check_connected = MagicMock(return_value=Response(result=True, error=None))
 
     # Call the login method
     response = client.login()
@@ -115,24 +107,18 @@ def test_host_connection_failure(client_mock):
     client, mock_post = client_mock
 
     # Mock the login success
-    client._attempt_login = MagicMock(
-        return_value=Response(result=True, error=None, id=None)
-    )
+    client._attempt_login = MagicMock(return_value=Response(result=True, error=None))
 
     # Mock check_connected to simulate not being connected initially
-    client.check_connected = MagicMock(
-        return_value=Response(result=False, error=None, id=None)
-    )
+    client.check_connected = MagicMock(return_value=Response(result=False, error=None))
 
     # Mock get_hosts to return a list of hosts
     client.get_hosts = MagicMock(
-        return_value=Response(result=[["host_id_1"]], error=None, id=None)
+        return_value=Response(result=[["host_id_1"]], error=None)
     )
 
     # Mock connect_to_host to simulate host connection failure
-    client.connect_to_host = MagicMock(
-        return_value=Response(result=False, error=None, id=None)
-    )
+    client.connect_to_host = MagicMock(return_value=Response(result=False, error=None))
 
     # Call the login method
     response = client.login()
@@ -171,6 +157,4 @@ def test_disconnect(client_mock):
 
     response = client.disconnect()
 
-    assert response == Response(
-        result="Connection was closed cleanly.", error=None, id=0
-    )
+    assert response == Response(result="Connection was closed cleanly.", error=None)
