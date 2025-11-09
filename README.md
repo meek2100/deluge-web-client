@@ -30,6 +30,8 @@ Install via pip from [PyPI](https://pypi.org/project/deluge-web-client/):
 python -m pip install deluge-web-client
 # or
 poetry add deluge-web-client
+# or
+uv add deluge-web-client
 ```
 
 ## Getting Started
@@ -49,14 +51,16 @@ client = DelugeWebClient(url="https://site.net/deluge", password="example_passwo
 # client.disconnect()
 client.login()
 
-# upload a torrent
+# uploading a torrent
+# 1) define your torrent options (what ever you don't set here will utilize Deluge defaults)
+torrent_options = TorrentOptions(
+    add_paused=True,
+    auto_managed=True,
+)
+# 2) upload the torrent and capture the returned output
 upload = client.upload_torrent(
     torrent_path="filepath.torrent",
-    add_paused=False, # optional
-    seed_mode=False, # optional
-    auto_managed=False, # optional
-    save_directory=None, # optional
-    label=None, # optional
+    torrent_options=torrent_options,
 )
 # this will return a `Response` object
 print(upload)
@@ -79,13 +83,13 @@ from deluge_web_client import DelugeWebClient
 
 # using a context manager automatically logs you in
 with DelugeWebClient(url="https://site.net/deluge", password="example_password") as client:
+    torrent_options = TorrentOptions(
+        add_paused=True,
+        auto_managed=True,
+    )
     upload = client.upload_torrent(
         torrent_path="filepath.torrent",
-        add_paused=False, # optional
-        seed_mode=False, # optional
-        auto_managed=False, # optional
-        save_directory=None, # optional
-        label=None, # optional
+        torrent_options=torrent_options,
     )
     print(upload)
     # Response(result="0407326f9d74629d299b525bd5f9b5dd583xxxx", error=None, id=1)
