@@ -26,7 +26,7 @@ Deluge Web API Client
    :target: https://codecov.io/github/jessielw/deluge-web-client
    :alt: codecov
 
-Python client implementation for `Deluge <https://deluge-torrent.org>`_ Web API
+Python HTTP client implementation for `Deluge <https://deluge-torrent.org>`_
 
 Features
 --------
