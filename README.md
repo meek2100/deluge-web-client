@@ -10,7 +10,7 @@
 [![Ruff](https://github.com/jessielw/deluge-web-client/actions/workflows/ruff.yml/badge.svg)](https://github.com/jessielw/deluge-web-client/actions/workflows/ruff.yml)
 [![codecov](https://codecov.io/github/jessielw/deluge-web-client/graph/badge.svg?token=TQQQ0NOG5F)](https://codecov.io/github/jessielw/deluge-web-client)
 
-Python client implementation for [Deluge](https://deluge-torrent.org/) Web API
+Python HTTP client implementation for [Deluge](https://deluge-torrent.org/)
 
 </div>
 
