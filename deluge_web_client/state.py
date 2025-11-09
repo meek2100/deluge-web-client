@@ -23,7 +23,7 @@ class TorrentState(Enum):
     @classmethod
     def _missing_(cls, value):
         """Override this method to ignore case sensitivity"""
-        value = value.lower()
+        value = str(value).lower()
         for member in cls:
             if member.name.lower() == value:
                 return member
