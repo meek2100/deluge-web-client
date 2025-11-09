@@ -1,8 +1,8 @@
 ========
-Response
+Schema
 ========
 
-.. autoclass:: deluge_web_client.response.Response
+.. autoclass:: deluge_web_client.schema.TorrentOptions
    :members:
    :undoc-members:
    :show-inheritance:

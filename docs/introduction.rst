@@ -42,42 +42,53 @@ Install via pip from `PyPI <https://pypi.org/project/deluge-web-client/>`_:
 
 .. code-block:: bash
 
-    python -m pip install deluge-web-client
+    python pip install deluge-web-client
     # or
     poetry add deluge-web-client
+    # or
+    uv add deluge-web-client
 
 Getting Started
 ---------------
 
-Before getting started, ensure that you have a running instance of Deluge with the WebUI enabled. You will also need to have a user set up for authentication. For guidance on setting up the WebUI, visit the `Deluge setup guide <https://deluge-torrent.org/userguide/>`_. Another good tutorial is `Trash-Guides basic setup <https://trash-guides.info/Downloaders/Deluge/Basic-Setup/>`_.
+Before getting started, ensure that you have a running instance of Deluge with the WebUI enabled. 
+You will also need to have a user set up for authentication. For guidance on setting up the WebUI, 
+visit the `Deluge setup guide <https://deluge-torrent.org/userguide/>`_. Another good tutorial is 
+`Trash-Guides basic setup <https://trash-guides.info/Downloaders/Deluge/Basic-Setup/>`_.
 
 Basic Usage
 -----------
 
 .. code-block:: python
 
-    from deluge_web_client import DelugeWebClient
+    from deluge_web_client import DelugeWebClient, TorrentOptions
 
     # instantiate a client
-    client = DelugeWebClient(url="https://site.net/deluge", password="example_password")
+    client = DelugeWebClient(
+        url="https://site.net/deluge", 
+        password="example_password"
+        daemon_port=58846 # optional
+    )
 
     # login
     # once logged in the `client` will maintain the logged in state as long as you don't call
     # client.disconnect()
     client.login()
 
-    # upload a torrent
+    # uploading a torrent
+    # 1) define your torrent options (what ever you don't set here will utilize Deluge defaults)
+    torrent_options = TorrentOptions(
+        add_paused=True,
+        auto_managed=True,
+    )
+    # 2) upload the torrent and capture the returned output
     upload = client.upload_torrent(
         torrent_path="filepath.torrent",
-        add_paused=False,  # optional
-        seed_mode=False,   # optional
-        auto_managed=False,  # optional
-        save_directory=None,  # optional
-        label=None,  # optional
+        torrent_options=torrent_options,
     )
     # this will return a `Response` object
     print(upload)
-    # Response(result=True, error=None, id=1)
+    # Response(result=True, error=None, message="Torrent added successfully")
 
     # retrieve and show all torrents
     all_torrents = client.get_torrents_status()
@@ -97,13 +108,13 @@ Context Manager
 
     # using a context manager automatically logs you in
     with DelugeWebClient(url="https://site.net/deluge", password="example_password") as client:
+        torrent_options = TorrentOptions(
+            add_paused=True,
+            auto_managed=True,
+        )
         upload = client.upload_torrent(
             torrent_path="filepath.torrent",
-            add_paused=False,  # optional
-            seed_mode=False,   # optional
-            auto_managed=False,  # optional
-            save_directory=None,  # optional
-            label=None,  # optional
+            torrent_options=torrent_options,
         )
         print(upload)
         # Response(result="0407326f9d74629d299b525bd5f9b5dd583xxxx", error=None, id=1)
