@@ -2,18 +2,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from deluge_web_client import DelugeWebClientError
+from deluge_web_client import DelugeWebClient, DelugeWebClientError
 from tests import MockResponse
 
 
 def test_enter(client_mock):
     client, _ = client_mock
 
-    client.login = MagicMock()
-
-    with client as c:
-        client.login.assert_called_once()
-        assert c is client
+    with patch.object(DelugeWebClient, "login") as mock_login:
+        with client as c:
+            mock_login.assert_called_once()
+            assert c is client
 
 
 def test_exit(client_mock):
@@ -24,12 +23,11 @@ def test_exit(client_mock):
     )
     mock_post.return_value.__enter__.return_value = mock_response
 
-    client.close_session = MagicMock()
+    with patch.object(DelugeWebClient, "close_session") as mock_close:
+        with client:
+            pass
 
-    with client:
-        pass
-
-    client.close_session.assert_called_once()
+        mock_close.assert_called_once()
 
 
 def test_get_libtorrent_version(client_mock):

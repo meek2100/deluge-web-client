@@ -1,8 +1,8 @@
-from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 
-from deluge_web_client import DelugeWebClientError, Response
+from deluge_web_client import DelugeWebClient, DelugeWebClientError, Response
 from tests import MockResponse
 
 
@@ -23,117 +23,139 @@ def test_failure_to_connect(client_mock):
 def test_successful_login_and_host_connection(client_mock):
     client, _ = client_mock
 
-    # Mock execute_call for login
-    client._attempt_login = MagicMock(return_value=Response(result=True, error=None))
-
-    # Mock check_connected to simulate not being connected initially, and then connected after host connection
-    client.check_connected = MagicMock(
-        side_effect=[
+    with (
+        patch.object(
+            DelugeWebClient,
+            "_attempt_login",
+            return_value=Response(result=True, error=None),
+        ) as mock_login,
+        patch.object(DelugeWebClient, "check_connected") as mock_check_connected,
+        patch.object(
+            DelugeWebClient,
+            "get_hosts",
+            return_value=Response(result=[["host_id_1"]], error=None),
+        ) as mock_get_hosts,
+        patch.object(
+            DelugeWebClient,
+            "connect_to_host",
+            return_value=Response(result=True, error=None),
+        ) as mock_connect,
+    ):
+        # Mock check_connected to simulate not being connected initially, and then connected after host connection
+        mock_check_connected.side_effect = [
             # Not connected yet
             Response(result=False, error=None),
             # Connected after host connection
             Response(result=True, error=None),
         ]
-    )
 
-    # Mock get_hosts to return a list of hosts
-    client.get_hosts = MagicMock(
-        return_value=Response(result=[["host_id_1"]], error=None)
-    )
+        # Call the login method
+        response = client.login()
 
-    # Mock connect_to_host to simulate successful host connection
-    client.connect_to_host = MagicMock(return_value=Response(result=True, error=None))
+        # Verify the response
+        assert response.result is True
+        assert response.error is None
 
-    # Call the login method
-    response = client.login()
+        # Verify method calls
+        # Login should be called once
+        mock_login.assert_called_once()
+        # Check connection should be called twice
+        mock_check_connected.assert_called()
+        # Host retrieval should be called once
+        mock_get_hosts.assert_called_once()
+        # Connect to the correct host
+        mock_connect.assert_called_once_with("host_id_1")
 
-    # Verify the response
-    assert response.result is True
-    assert response.error is None
-
-    # Verify method calls
-    # Login should be called once
-    client._attempt_login.assert_called_once()
-    # Check connection should be called twice
-    client.check_connected.assert_called()
-    # Host retrieval should be called once
-    client.get_hosts.assert_called_once()
-    # Connect to the correct host
-    client.connect_to_host.assert_called_once_with("host_id_1")
-
-    # Verify the flow of calls (login, check if connected, get hosts, connect to host)
-    assert client.check_connected.call_count == 2
+        # Verify the flow of calls (login, check if connected, get hosts, connect to host)
+        assert mock_check_connected.call_count == 2
 
 
 def test_login_failure(client_mock):
     client, mock_post = client_mock
 
     # Mock the login attempt to return a failure response
-    client._attempt_login = MagicMock(return_value=Response(result=False, error=None))
+    with patch.object(
+        DelugeWebClient,
+        "_attempt_login",
+        return_value=Response(result=False, error=None),
+    ) as mock_login:
+        # Call the login method
+        response = client.login()
 
-    # Call the login method
-    response = client.login()
+        # Verify the response
+        assert response.result is False
+        assert response.error == "Login failed"
 
-    # Verify the response
-    assert response.result is False
-    assert response.error == "Login failed"
-
-    # Verify that _attempt_login was called once
-    client._attempt_login.assert_called_once()
+        # Verify that _attempt_login was called once
+        mock_login.assert_called_once()
 
 
 def test_already_connected(client_mock):
     client, mock_post = client_mock
 
-    # Mock login success and already connected response
-    client._attempt_login = MagicMock(return_value=Response(result=True, error=None))
-    client.check_connected = MagicMock(return_value=Response(result=True, error=None))
+    with (
+        patch.object(
+            DelugeWebClient,
+            "_attempt_login",
+            return_value=Response(result=True, error=None),
+        ) as mock_login,
+        patch.object(
+            DelugeWebClient,
+            "check_connected",
+            return_value=Response(result=True, error=None),
+        ) as mock_check_connected,
+    ):
+        # Call the login method
+        response = client.login()
 
-    # Call the login method
-    response = client.login()
+        # Verify the response
+        assert response.result is True
+        assert response.error is None
 
-    # Verify the response
-    assert response.result is True
-    assert response.error is None
-
-    # Verify method calls
-    # Login should be called once
-    client._attempt_login.assert_called_once()
-    # Check connection should be called once
-    client.check_connected.assert_called_once()
+        # Verify method calls
+        # Login should be called once
+        mock_login.assert_called_once()
+        # Check connection should be called once
+        mock_check_connected.assert_called_once()
 
 
 def test_host_connection_failure(client_mock):
     client, mock_post = client_mock
 
-    # Mock the login success
-    client._attempt_login = MagicMock(return_value=Response(result=True, error=None))
+    with (
+        patch.object(
+            DelugeWebClient,
+            "_attempt_login",
+            return_value=Response(result=True, error=None),
+        ) as mock_login,
+        patch.object(
+            DelugeWebClient,
+            "check_connected",
+            return_value=Response(result=False, error=None),
+        ) as mock_check_connected,
+        patch.object(
+            DelugeWebClient,
+            "get_hosts",
+            return_value=Response(result=[["host_id_1"]], error=None),
+        ) as mock_get_hosts,
+        patch.object(
+            DelugeWebClient,
+            "connect_to_host",
+            return_value=Response(result=False, error=None),
+        ) as mock_connect,
+    ):
+        # Call the login method
+        response = client.login()
 
-    # Mock check_connected to simulate not being connected initially
-    client.check_connected = MagicMock(return_value=Response(result=False, error=None))
+        # Verify the response
+        assert response.result is False
+        assert response.error == "Failed to connect to host"
 
-    # Mock get_hosts to return a list of hosts
-    client.get_hosts = MagicMock(
-        return_value=Response(result=[["host_id_1"]], error=None)
-    )
-
-    # Mock connect_to_host to simulate host connection failure
-    client.connect_to_host = MagicMock(return_value=Response(result=False, error=None))
-
-    # Call the login method
-    response = client.login()
-
-    # Verify the response
-    assert response.result is False
-    assert response.error == "Failed to connect to host"
-
-    # Verify method calls
-    client._attempt_login.assert_called_once()  # Login should be called once
-    client.check_connected.assert_called_once()  # Check connection should be called once
-    client.get_hosts.assert_called_once()  # Get hosts should be called once
-    client.connect_to_host.assert_called_once_with(
-        "host_id_1"
-    )  # Connect to the first host
+        # Verify method calls
+        mock_login.assert_called_once()  # Login should be called once
+        mock_check_connected.assert_called_once()  # Check connection should be called once
+        mock_get_hosts.assert_called_once()  # Get hosts should be called once
+        mock_connect.assert_called_once_with("host_id_1")  # Connect to the first host
 
 
 def test_close_session(client_mock):
