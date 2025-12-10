@@ -8,6 +8,39 @@ from deluge_web_client import DelugeWebClientError, TorrentOptions
 from tests import MockResponse, example_multi_status_dict, example_status_dict
 
 
+def test_upload_helper_duplicate_torrent(client_mock):
+    client, _ = client_mock
+
+    # Mock parameters
+    payload = {"method": "core.add_torrent_file", "params": [], "id": 0}
+    label = "Test Label"
+
+    # Mock response for a duplicate torrent error
+    # The error format depends on how Deluge returns it, but _parse_deluge_error handles various formats.
+    # We'll simulate a dict error which is common.
+    error_data = {
+        "message": "Torrent already exists. Info Hash: 1234567890abcdef1234567890abcdef12345678",
+        "code": 1,
+        "class": "deluge.error.AddTorrentError",
+    }
+
+    with patch.object(
+        client.session,
+        "post",
+        return_value=MockResponse(
+            json_data={"result": None, "error": error_data},
+            ok=True,
+            status_code=200,
+        ),
+    ):
+        response = client._upload_helper(payload, label, timeout=30)
+
+    # Verify we got the existing hash back and specific message
+    assert response.result == "1234567890abcdef1234567890abcdef12345678"
+    assert response.message == "Torrent already exists"
+    assert response.error is None
+
+
 def test_upload_torrent(client_mock):
     client, _ = client_mock
 
@@ -501,38 +534,3 @@ def test_set_torrent_trackers(client_mock):
     assert mock_post.called
     assert mock_post.call_count == 1
     assert mock_post.call_args[1]["json"]["method"] == "core.set_torrent_trackers"
-from unittest.mock import MagicMock, patch
-from tests import MockResponse
-from deluge_web_client import TorrentOptions
-
-def test_upload_helper_duplicate_torrent(client_mock):
-    client, _ = client_mock
-
-    # Mock parameters
-    payload = {"method": "core.add_torrent_file", "params": [], "id": 0}
-    label = "Test Label"
-
-    # Mock response for a duplicate torrent error
-    # The error format depends on how Deluge returns it, but _parse_deluge_error handles various formats.
-    # We'll simulate a dict error which is common.
-    error_data = {
-        "message": "Torrent already exists. Info Hash: 1234567890abcdef1234567890abcdef12345678",
-        "code": 1,
-        "class": "deluge.error.AddTorrentError"
-    }
-
-    with patch.object(
-        client.session,
-        "post",
-        return_value=MockResponse(
-            json_data={"result": None, "error": error_data},
-            ok=True,
-            status_code=200
-        ),
-    ):
-        response = client._upload_helper(payload, label, timeout=30)
-
-    # Verify we got the existing hash back and specific message
-    assert response.result == "1234567890abcdef1234567890abcdef12345678"
-    assert response.message == "Torrent already exists"
-    assert response.error is None
