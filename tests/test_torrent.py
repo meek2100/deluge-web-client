@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from deluge_web_client import DelugeWebClientError, TorrentOptions
+from deluge_web_client.client import DelugeWebClient
 from tests import MockResponse, example_multi_status_dict, example_status_dict
 
 
@@ -21,7 +22,9 @@ def test_upload_torrent(client_mock):
     with (
         patch("builtins.open", mock_open(read_data=mocked_file_content)),
         patch.object(
-            client, "_upload_helper", return_value=MagicMock(result=True, error=None)
+            DelugeWebClient,
+            "_upload_helper",
+            return_value=MagicMock(result=True, error=None),
         ) as mock_upload_helper,
     ):
         # Call the upload_torrent method
@@ -52,7 +55,7 @@ def test_upload_torrents(client_mock):
     }
 
     # Patch the upload_torrent method to return mocked responses
-    with patch.object(client, "upload_torrent") as mock_upload_torrent:
+    with patch.object(DelugeWebClient, "upload_torrent") as mock_upload_torrent:
         # Set side effects for multiple calls
         mock_upload_torrent.side_effect = [
             mock_responses["torrent1"],
@@ -90,7 +93,7 @@ def test_upload_torrents_failure(client_mock):
     client, _ = client_mock
 
     # Mock the upload_torrent method to raise an exception for one of the torrents
-    with patch.object(client, "upload_torrent") as mock_upload_torrent:
+    with patch.object(DelugeWebClient, "upload_torrent") as mock_upload_torrent:
         mock_upload_torrent.side_effect = [
             MagicMock(result=True, error=None),  # First upload succeeds
             Exception("Upload failed"),  # Second upload fails
@@ -118,7 +121,7 @@ def test_add_torrent_magnet(client_mock):
     mock_response.json.return_value = {"result": "Ok", "id": 0}
 
     with patch.object(
-        client, "_upload_helper", return_value=mock_response
+        DelugeWebClient, "_upload_helper", return_value=mock_response
     ) as mock_upload_helper:
         options = TorrentOptions(add_paused=True, download_location="/downloads")
         response = client.add_torrent_magnet(magnet_uri, options)
@@ -138,7 +141,9 @@ def test_add_torrent_magnet_failure(client_mock):
 
     # Mock the _upload_helper to raise an exception
     with patch.object(
-        client, "_upload_helper", side_effect=DelugeWebClientError("Upload failed")
+        DelugeWebClient,
+        "_upload_helper",
+        side_effect=DelugeWebClientError("Upload failed"),
     ):
         with pytest.raises(DelugeWebClientError, match=r".+"):
             options = TorrentOptions()
@@ -154,7 +159,7 @@ def test_add_torrent_url(client_mock):
     mock_response.json.return_value = {"result": "Ok", "id": 0}
 
     with patch.object(
-        client, "_upload_helper", return_value=mock_response
+        DelugeWebClient, "_upload_helper", return_value=mock_response
     ) as mock_upload_helper:
         options = TorrentOptions(add_paused=False, download_location="/downloads")
         response = client.add_torrent_url(torrent_url, options)
@@ -174,7 +179,9 @@ def test_add_torrent_url_failure(client_mock):
 
     # Mock the _upload_helper to raise an exception
     with patch.object(
-        client, "_upload_helper", side_effect=DelugeWebClientError("Upload failed")
+        DelugeWebClient,
+        "_upload_helper",
+        side_effect=DelugeWebClientError("Upload failed"),
     ):
         with pytest.raises(DelugeWebClientError, match=r".+"):
             options = TorrentOptions()

@@ -1,8 +1,9 @@
-from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 
 from deluge_web_client import DelugeWebClientError
+from deluge_web_client.client import DelugeWebClient
 from tests import MockResponse
 
 
@@ -115,39 +116,44 @@ def test_apply_label(client_mock):
     client, _ = client_mock
 
     # mock the add_label and set_label methods using side_effect to simulate real behavior
-    client.add_label = MagicMock(
-        side_effect=(
-            MockResponse(
-                {"result": None, "error": None, "id": 0},
-                ok=True,
-                status_code=200,
-                reason="test",
+    with (
+        patch.object(
+            DelugeWebClient,
+            "add_label",
+            side_effect=(
+                MockResponse(
+                    {"result": None, "error": None, "id": 0},
+                    ok=True,
+                    status_code=200,
+                    reason="test",
+                ),
             ),
-        )
-    )
-    client.set_label = MagicMock(
-        side_effect=(
-            MockResponse(
-                {"result": None, "error": None, "id": 1},
-                ok=True,
-                status_code=200,
-                reason="test",
+        ) as mock_add_label,
+        patch.object(
+            DelugeWebClient,
+            "set_label",
+            side_effect=(
+                MockResponse(
+                    {"result": None, "error": None, "id": 1},
+                    ok=True,
+                    status_code=200,
+                    reason="test",
+                ),
             ),
+        ) as mock_set_label,
+    ):
+        info_hash = "mocked_info_hash"
+        label = "movies"
+        timeout = 30
+
+        # call the helper method
+        response_add_label, response_set_label = client._apply_label(
+            info_hash, label, timeout
         )
-    )
 
-    info_hash = "mocked_info_hash"
-    label = "movies"
-    timeout = 30
-
-    # call the helper method
-    response_add_label, response_set_label = client._apply_label(
-        info_hash, label, timeout
-    )
-
-    # assert that add_label and set_label were called with correct arguments
-    client.add_label.assert_called_once_with(label, timeout)
-    client.set_label.assert_called_once_with(info_hash, label, timeout)
+        # assert that add_label and set_label were called with correct arguments
+        mock_add_label.assert_called_once_with(label, timeout)
+        mock_set_label.assert_called_once_with(info_hash, label, timeout)
 
     # assert that the responses are as expected
     assert response_add_label.json().get("result") is None
