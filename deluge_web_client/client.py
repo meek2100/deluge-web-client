@@ -22,6 +22,7 @@ class DelugeWebClient:
         "daemon_port",
         "_base_url",
         "_request_id",
+        "__dict__",
     )
 
     def __init__(self, url: str, password: str, daemon_port: int = 58846) -> None:
@@ -284,9 +285,11 @@ class DelugeWebClient:
             if isinstance(parsed_class, str) and parsed_class.endswith(
                 "AddTorrentError"
             ):
-                info_hash = parsed.get("info_hash")
-                if info_hash:
-                    return Response(result=info_hash, message="Torrent already exists")
+                existing_info_hash = parsed.get("info_hash")
+                if existing_info_hash:
+                    return Response(
+                        result=existing_info_hash, message="Torrent already exists"
+                    )
 
             # all other errors: raise with parsed information
             error_msg = parsed.get("message") or "Unknown error"
@@ -864,8 +867,9 @@ class DelugeWebClient:
                 parsed["message"] = err_str.strip()
 
         # extract info hash (40 hex characters) if present in the message
-        if parsed.get("message"):
-            hash_match = re.search(r"\b([0-9a-fA-F]{40})\b", parsed["message"])
+        msg = parsed.get("message")
+        if msg:
+            hash_match = re.search(r"\b([0-9a-fA-F]{40})\b", msg)
             if hash_match:
                 parsed["info_hash"] = hash_match.group(1)
 
