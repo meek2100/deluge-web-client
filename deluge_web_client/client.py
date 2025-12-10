@@ -22,6 +22,7 @@ class DelugeWebClient:
         "daemon_port",
         "_base_url",
         "_request_id",
+        "__dict__",
     )
 
     def __init__(self, url: str, password: str, daemon_port: int = 58846) -> None:
