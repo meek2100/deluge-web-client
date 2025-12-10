@@ -1,6 +1,6 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
-from deluge_web_client import Response
+from deluge_web_client import DelugeWebClient, Response
 from tests import MockResponse
 
 
@@ -191,52 +191,55 @@ def test_find_host_id_by_name(client_mock):
     client, _ = client_mock
 
     # Mock the get_hosts method to return a list of hosts
-    client.get_hosts = MagicMock(
+    with patch.object(
+        DelugeWebClient,
+        "get_hosts",
         return_value=Response(
             result=[
                 ["host_id_1", "127.0.0.1", 58846, "localclient"],
                 ["host_id_2", "127.0.0.1", 58847, "remoteclient"],
             ],
             error=None,
-        )
-    )
+        ),
+    ):
+        # Test finding existing host
+        response = client.find_host_id_by_name("localclient")
+        assert response.result == "host_id_1"
+        assert response.error is None
 
-    # Test finding existing host
-    response = client.find_host_id_by_name("localclient")
-    assert response.result == "host_id_1"
-    assert response.error is None
-
-    # Test finding another existing host
-    response = client.find_host_id_by_name("remoteclient")
-    assert response.result == "host_id_2"
-    assert response.error is None
+        # Test finding another existing host
+        response = client.find_host_id_by_name("remoteclient")
+        assert response.result == "host_id_2"
+        assert response.error is None
 
 
 def test_find_host_id_by_name_not_found(client_mock):
     client, _ = client_mock
 
     # Mock the get_hosts method
-    client.get_hosts = MagicMock(
+    with patch.object(
+        DelugeWebClient,
+        "get_hosts",
         return_value=Response(
             result=[["host_id_1", "127.0.0.1", 58846, "localclient"]], error=None
-        )
-    )
-
-    # Test finding non-existent host
-    response = client.find_host_id_by_name("nonexistent")
-    assert response.result is None
-    assert response.error is None
+        ),
+    ):
+        # Test finding non-existent host
+        response = client.find_host_id_by_name("nonexistent")
+        assert response.result is None
+        assert response.error is None
 
 
 def test_find_host_id_by_name_no_hosts(client_mock):
     client, _ = client_mock
 
     # Mock the get_hosts method to return empty list
-    client.get_hosts = MagicMock(return_value=Response(result=[], error=None))
-
-    response = client.find_host_id_by_name("anyhost")
-    assert response.result is True  # Returns True when no hosts exist
-    assert response.error is None
+    with patch.object(
+        DelugeWebClient, "get_hosts", return_value=Response(result=[], error=None)
+    ):
+        response = client.find_host_id_by_name("anyhost")
+        assert response.result is True  # Returns True when no hosts exist
+        assert response.error is None
 
 
 def test_edit_host(client_mock):
