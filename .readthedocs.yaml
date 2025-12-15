@@ -7,16 +7,19 @@ version: 2
 
 # Set the Python version and any additional tools required
 build:
-  os: ubuntu-22.04  # Default OS
+  os: ubuntu-22.04 # Default OS
   tools:
-    python: "3.9"  # Specify Python version
+    python: "3.13" # Specify Python version
 
 # Define where the Sphinx configuration file is located
 sphinx:
-  configuration: docs/conf.py  # Path to the Sphinx conf.py
+  configuration: docs/conf.py # Path to the Sphinx conf.py
 
 # Specify the Python dependencies needed to build the documentation
 python:
   install:
-    - requirements: docs/requirements.txt  # Path to the requirements file for building docs
-    
+    - method: pip
+      path: .
+      # This installs the 'docs' group defined in pyproject.toml
+      extra_requirements:
+        - docs
