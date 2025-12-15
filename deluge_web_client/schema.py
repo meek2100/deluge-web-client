@@ -1,10 +1,10 @@
-from typing import NamedTuple, Optional, Union
+from typing import Any, NamedTuple, Optional, Union
 
 
 class Response(NamedTuple):
     """Object that is filled on each request."""
 
-    result: Union[bool, str, list, None] = None
+    result: Union[bool, str, list, dict[str, Any], None] = None
     error: Union[None, str, dict] = None
     message: Optional[str] = None
 

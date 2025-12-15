@@ -190,7 +190,7 @@ class DelugeWebClient:
         uri: str,
         torrent_options: TorrentOptions,
         timeout: int = 30,
-    ):
+    ) -> Response:
         """
         Adds a torrent from a magnet link.
 
@@ -214,7 +214,7 @@ class DelugeWebClient:
         url: str,
         torrent_options: TorrentOptions,
         timeout: int = 30,
-    ):
+    ) -> Response:
         """
         Adds a torrent from a URL.
 
