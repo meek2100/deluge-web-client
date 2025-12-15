@@ -5,21 +5,19 @@
 # Required version key
 version: 2
 
-# Set the Python version and any additional tools required
-build:
-  os: ubuntu-22.04 # Default OS
-  tools:
-    python: "3.13" # Specify Python version
-
-# Define where the Sphinx configuration file is located
 sphinx:
-  configuration: docs/conf.py # Path to the Sphinx conf.py
+  configuration: docs/conf.py
 
-# Specify the Python dependencies needed to build the documentation
-python:
-  install:
-    - method: pip
-      path: .
-      # This installs the 'docs' group defined in pyproject.toml
-      extra_requirements:
-        - docs
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.13"
+  jobs:
+    pre_create_environment:
+      - asdf plugin add uv
+      - asdf install uv latest
+      - asdf global uv latest
+    create_environment:
+      - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
+    install:
+      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --frozen --group docs

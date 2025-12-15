@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath("_themes"))
 import deluge_web_client
 
 project = "Deluge Web Client"
-copyright = "2024, jessielw"
+copyright = "2025, jessielw"
 author = "jessielw"
 
 # -- General configuration ---------------------------------------------------
