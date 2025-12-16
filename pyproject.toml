@@ -76,9 +76,16 @@ testpaths = ["tests"]
 where = ["."]
 include = ["deluge_web_client*"]
 
+[tool.setuptools.package-data]
+"deluge_web_client" = ["py.typed"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py39"
 
 [tool.ruff.lint]
 select = ["I", "UP"]
+
+[tool.mypy]
+strict = true
+python_version = "3.9"
