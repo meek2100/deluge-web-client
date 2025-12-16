@@ -23,7 +23,9 @@ def test_failure_to_connect(client_mock: tuple[DelugeWebClient, MagicMock]) -> N
         client.login()
 
 
-def test_successful_login_and_host_connection(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+def test_successful_login_and_host_connection(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, _ = client_mock
 
     # Mock execute_call for login
@@ -125,7 +127,9 @@ def test_already_connected(client_mock: tuple[DelugeWebClient, MagicMock]) -> No
         mock_check_connected.assert_called_once()
 
 
-def test_host_connection_failure(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+def test_host_connection_failure(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, mock_post = client_mock
 
     # Mock the login success

@@ -68,7 +68,9 @@ def test_add_label_success(client_mock: tuple[DelugeWebClient, MagicMock]) -> No
     assert mock_post.call_args[1]["json"]["method"] == "label.add"
 
 
-def test_add_label_already_exists(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+def test_add_label_already_exists(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, mock_post = client_mock
 
     already_exists_info = {
@@ -158,7 +160,10 @@ def test_apply_label(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     assert response_add_label.result is None
     assert response_set_label.result is None
 
-def test_upload_helper_invalid_json(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+
+def test_upload_helper_invalid_json(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, mock_post = client_mock
 
     # Create a mock response that raises an exception when .json() is called
@@ -173,7 +178,10 @@ def test_upload_helper_invalid_json(client_mock: tuple[DelugeWebClient, MagicMoc
     with pytest.raises(DelugeWebClientError, match="Invalid JSON response"):
         client._upload_helper(payload, label=None, timeout=30)
 
-def test_upload_helper_already_exists(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+
+def test_upload_helper_already_exists(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -183,7 +191,7 @@ def test_upload_helper_already_exists(client_mock: tuple[DelugeWebClient, MagicM
                 "error": {
                     "message": "Torrent already in session (1234567890abcdef1234567890abcdef12345678)",
                     "code": 4,
-                    "class": "deluge.error.AddTorrentError"
+                    "class": "deluge.error.AddTorrentError",
                 },
                 "id": 1,
             },
@@ -197,7 +205,10 @@ def test_upload_helper_already_exists(client_mock: tuple[DelugeWebClient, MagicM
     assert response.result == "1234567890abcdef1234567890abcdef12345678"
     assert response.message == "Torrent already exists"
 
-def test_upload_helper_unknown_error(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+
+def test_upload_helper_unknown_error(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -216,13 +227,18 @@ def test_upload_helper_unknown_error(client_mock: tuple[DelugeWebClient, MagicMo
     with pytest.raises(DelugeWebClientError, match="Failed to add torrent"):
         client._upload_helper(payload, label=None, timeout=30)
 
+
 def test_add_torrent_file(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     # Test for upload_torrent method which is not fully covered
     client, _ = client_mock
 
     with (
         patch("builtins.open", new_callable=MagicMock) as mock_file,
-        patch.object(DelugeWebClient, "_upload_helper", return_value=Response(result="hash", error=None)) as mock_upload
+        patch.object(
+            DelugeWebClient,
+            "_upload_helper",
+            return_value=Response(result="hash", error=None),
+        ) as mock_upload,
     ):
         mock_file.return_value.__enter__.return_value.read.return_value = b"data"
 

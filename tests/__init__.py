@@ -9,17 +9,17 @@ class MockResponse:
 
     def __init__(
         self,
-        json_data: Optional[dict[str, Any]] = {},
-        ok: Optional[bool] = None,
-        status_code: Optional[int] = None,
-        reason: Optional[str] = None,
+        json_data: dict[str, Any] | None = {},
+        ok: bool | None = None,
+        status_code: int | None = None,
+        reason: str | None = None,
     ):
         self.json_data = json_data
         self.ok = ok
         self.status_code = status_code
         self.reason = reason
 
-    def json(self) -> Optional[dict[str, Any]]:
+    def json(self) -> dict[str, Any] | None:
         return self.json_data
 
     def __enter__(self) -> MockResponse:

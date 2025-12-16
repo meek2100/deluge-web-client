@@ -226,7 +226,9 @@ def test_test_listen_port(client_mock: tuple[DelugeWebClient, MagicMock]) -> Non
     assert mock_post.call_args[1]["json"]["method"] == "core.test_listen_port"
 
 
-def test_execute_call_with_error(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+def test_execute_call_with_error(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, _ = client_mock
     payload = {"method": "core.add_torrent_file", "params": [], "id": 0}
 
@@ -250,7 +252,9 @@ def test_execute_call_with_error(client_mock: tuple[DelugeWebClient, MagicMock])
             client.execute_call(payload)
 
 
-def test_parse_deluge_error_coverage(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+def test_parse_deluge_error_coverage(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, _ = client_mock
 
     # Test 1: Empty error (Line 876)
@@ -267,7 +271,10 @@ def test_parse_deluge_error_coverage(client_mock: tuple[DelugeWebClient, MagicMo
     parsed = client._parse_deluge_error(err_str)
     assert parsed["class"] == "deluge.error.StringError"
 
-def test_execute_call_invalid_json(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+
+def test_execute_call_invalid_json(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, mock_post = client_mock
 
     # Create a mock response that raises an exception when .json() is called

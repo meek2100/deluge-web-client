@@ -27,7 +27,9 @@ def test_start_daemon(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     assert mock_post.call_args[1]["json"]["params"] == [58846]  # default daemon_port
 
 
-def test_start_daemon_custom_port(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+def test_start_daemon_custom_port(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, mock_post = client_mock
     client.daemon_port = 12345
 
@@ -88,7 +90,9 @@ def test_update_ui(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     assert mock_post.call_args[1]["json"]["params"] == [[], {}]
 
 
-def test_update_ui_with_keys_and_filter(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+def test_update_ui_with_keys_and_filter(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -216,7 +220,9 @@ def test_find_host_id_by_name(client_mock: tuple[DelugeWebClient, MagicMock]) ->
         assert response.error is None
 
 
-def test_find_host_id_by_name_not_found(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+def test_find_host_id_by_name_not_found(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, _ = client_mock
 
     # Mock the get_hosts method
@@ -233,7 +239,9 @@ def test_find_host_id_by_name_not_found(client_mock: tuple[DelugeWebClient, Magi
         assert response.error is None
 
 
-def test_find_host_id_by_name_no_hosts(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+def test_find_host_id_by_name_no_hosts(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, _ = client_mock
 
     # Mock the get_hosts method to return empty list
@@ -299,7 +307,9 @@ def test_update_ui_defaults(client_mock: tuple[DelugeWebClient, MagicMock]) -> N
     assert mock_post.call_args[1]["json"]["params"] == [[], {}]
 
 
-def test_find_host_id_by_name_malformed(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+def test_find_host_id_by_name_malformed(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, _ = client_mock
 
     # Mock get_hosts to return a malformed list (missing elements) to trigger IndexError (lines 769-771)
