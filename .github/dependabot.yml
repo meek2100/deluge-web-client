@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # Maintain dependencies for the package ecosystem (pip/uv)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Create pull requests for security updates and version upgrades
+    open-pull-requests-limit: 10
+    groups:
+      # Group all dev dependencies into one PR to reduce noise
+      dev-dependencies:
+        patterns:
+          - "ruff"
+          - "mypy"
+          - "pytest"
+          - "pytest-cov"
+          - "coverage"
+          - "types-pygments"
+          - "vermin"
+          - "furo"
+          - "sphinx"
+          - "sphinx-autodoc-typehints"
+          - "Pygments"
+
+  # Maintain GitHub Actions versions (e.g. actions/checkout@v4)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"

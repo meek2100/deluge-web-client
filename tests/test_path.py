@@ -1,7 +1,12 @@
+from __future__ import annotations
+
+from unittest.mock import MagicMock
+
+from deluge_web_client import DelugeWebClient
 from tests import MockResponse
 
 
-def test_get_free_space(client_mock):
+def test_get_free_space(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -17,7 +22,7 @@ def test_get_free_space(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "core.get_free_space"
 
 
-def test_get_path_size(client_mock):
+def test_get_path_size(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (

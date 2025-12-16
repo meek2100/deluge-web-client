@@ -3,6 +3,7 @@ name: Ruff
 on:
   push:
   pull_request:
+  # workflow_dispatch:
 
 jobs:
   ruff_check:
@@ -25,5 +26,5 @@ jobs:
 
       - name: Run Ruff
         run: |
-          uv run ruff check 
+          uv run ruff check
           uv run ruff format --check
