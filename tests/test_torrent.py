@@ -1,22 +1,25 @@
+from __future__ import annotations
+
 import base64
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
+from niquests import Response
 
 from deluge_web_client import DelugeWebClientError, TorrentOptions
 from deluge_web_client.client import DelugeWebClient
 from tests import MockResponse, example_multi_status_dict, example_status_dict
 
 
-def test_upload_torrent(client_mock):
+def test_upload_torrent(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
 
     # Mock parameters for the test
     torrent_path = "mocked_torrent_file.torrent"
     # Mocked content of the torrent file
     mocked_file_content = b"mocked torrent file content"
-    base64_encoded_content = base64.b64encode(mocked_file_content).decode("utf-8")
 
     # Mock the open function to simulate reading a torrent file
     with (
@@ -45,7 +48,7 @@ def test_upload_torrent(client_mock):
     assert called_timeout == 30
 
 
-def test_upload_torrents(client_mock):
+def test_upload_torrents(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
 
     # Mock the responses for upload_torrent
@@ -89,7 +92,7 @@ def test_upload_torrents(client_mock):
     )
 
 
-def test_upload_torrents_failure(client_mock):
+def test_upload_torrents_failure(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
 
     # Mock the upload_torrent method to raise an exception for one of the torrents
@@ -112,7 +115,7 @@ def test_upload_torrents_failure(client_mock):
         assert mock_upload_torrent.call_count == 2
 
 
-def test_add_torrent_magnet(client_mock):
+def test_add_torrent_magnet(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
     magnet_uri = "magnet:?xt=urn:btih:...&dn=example"
 
@@ -135,7 +138,7 @@ def test_add_torrent_magnet(client_mock):
     assert called_payload["params"][0] == str(magnet_uri)
 
 
-def test_add_torrent_magnet_failure(client_mock):
+def test_add_torrent_magnet_failure(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
     magnet_uri = "magnet:?xt=urn:btih:..."
 
@@ -150,7 +153,7 @@ def test_add_torrent_magnet_failure(client_mock):
             client.add_torrent_magnet(magnet_uri, options)
 
 
-def test_add_torrent_url(client_mock):
+def test_add_torrent_url(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
     torrent_url = "http://example.com/torrent"
 
@@ -173,7 +176,7 @@ def test_add_torrent_url(client_mock):
     assert called_payload["params"][0] == str(torrent_url)
 
 
-def test_add_torrent_url_failure(client_mock):
+def test_add_torrent_url_failure(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
     torrent_url = "http://example.com/torrent"
 
@@ -188,9 +191,9 @@ def test_add_torrent_url_failure(client_mock):
             client.add_torrent_url(torrent_url, options)
 
 
-def test_upload_helper_success(client_mock):
+def test_upload_helper_success(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
-    payload = {"method": "core.add_torrent_file", "params": [], "id": 0}
+    payload: dict[str, Any] = {"method": "core.add_torrent_file", "params": [], "id": 0}
     label = "Test Label"
 
     with patch.object(
@@ -207,9 +210,9 @@ def test_upload_helper_success(client_mock):
     # client.ID counter removed; ensure we get a valid response and no exceptions
 
 
-def test_upload_helper_failure(client_mock):
+def test_upload_helper_failure(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
-    payload = {"method": "core.add_torrent_file", "params": [], "id": 0}
+    payload: dict[str, Any] = {"method": "core.add_torrent_file", "params": [], "id": 0}
     label = "Test Label"
 
     with patch.object(
@@ -227,7 +230,7 @@ def test_upload_helper_failure(client_mock):
             )
 
 
-def test_get_torrent_files(client_mock):
+def test_get_torrent_files(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     contents = {
@@ -265,7 +268,7 @@ def test_get_torrent_files(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "web.get_torrent_files"
 
 
-def test_get_torrent_status(client_mock):
+def test_get_torrent_status(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -288,7 +291,7 @@ def test_get_torrent_status(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "core.get_torrent_status"
 
 
-def test_get_torrents_status(client_mock):
+def test_get_torrents_status(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -303,7 +306,7 @@ def test_get_torrents_status(client_mock):
         ),
     )
 
-    response = client.get_torrents_status("mock_torrent_id")
+    response = client.get_torrents_status("mock_torrent_id")  # type: ignore[arg-type]
     assert response.error is None
     assert response.result == example_multi_status_dict
     assert mock_post.called
@@ -311,7 +314,7 @@ def test_get_torrents_status(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "core.get_torrents_status"
 
 
-def test_pause_torrent(client_mock):
+def test_pause_torrent(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -334,7 +337,7 @@ def test_pause_torrent(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "core.pause_torrent"
 
 
-def test_pause_torrents(client_mock):
+def test_pause_torrents(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -357,7 +360,7 @@ def test_pause_torrents(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "core.pause_torrents"
 
 
-def test_remove_torrent(client_mock):
+def test_remove_torrent(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -394,7 +397,7 @@ def test_remove_torrent(client_mock):
     assert mock_post.call_args[1]["json"]["params"] == ["mock_torrent_id", True]
 
 
-def test_remove_torrents(client_mock):
+def test_remove_torrents(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     # Provide two responses for two calls
@@ -439,7 +442,7 @@ def test_remove_torrents(client_mock):
     ]
 
 
-def test_resume_torrent(client_mock):
+def test_resume_torrent(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -462,7 +465,7 @@ def test_resume_torrent(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "core.resume_torrent"
 
 
-def test_resume_torrents(client_mock):
+def test_resume_torrents(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -485,7 +488,7 @@ def test_resume_torrents(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "core.resume_torrents"
 
 
-def test_set_torrent_trackers(client_mock):
+def test_set_torrent_trackers(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -510,7 +513,7 @@ def test_set_torrent_trackers(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "core.set_torrent_trackers"
 
 
-def test_get_torrents_status_defaults(client_mock):
+def test_get_torrents_status_defaults_none(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -536,7 +539,7 @@ def test_get_torrents_status_defaults(client_mock):
     assert mock_post.call_args[1]["json"]["params"] == [{}, [], False]
 
 
-def test_get_torrent_status_defaults(client_mock):
+def test_get_torrent_status_defaults(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
     mock_post.side_effect = (
         MockResponse({"result": {}, "error": None, "id": 1}, ok=True, status_code=200),
@@ -549,7 +552,7 @@ def test_get_torrent_status_defaults(client_mock):
     assert mock_post.call_args[1]["json"]["params"] == ["torrent_id", [], False]
 
 
-def test_get_torrents_status_defaults(client_mock):
+def test_get_torrents_status_defaults(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
     mock_post.side_effect = (
         MockResponse({"result": {}, "error": None, "id": 1}, ok=True, status_code=200),

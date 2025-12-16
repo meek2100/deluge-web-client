@@ -1,4 +1,7 @@
-from typing import Optional
+from __future__ import annotations
+
+import types
+from typing import Any, Optional
 
 
 class MockResponse:
@@ -6,7 +9,7 @@ class MockResponse:
 
     def __init__(
         self,
-        json_data: Optional[dict] = {},
+        json_data: Optional[dict[str, Any]] = {},
         ok: Optional[bool] = None,
         status_code: Optional[int] = None,
         reason: Optional[str] = None,
@@ -16,13 +19,18 @@ class MockResponse:
         self.status_code = status_code
         self.reason = reason
 
-    def json(self):
+    def json(self) -> Optional[dict[str, Any]]:
         return self.json_data
 
-    def __enter__(self):
+    def __enter__(self) -> MockResponse:
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: types.TracebackType | None,
+    ) -> None:
         pass
 
 

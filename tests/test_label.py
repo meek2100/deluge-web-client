@@ -1,13 +1,16 @@
-from unittest.mock import patch
+from __future__ import annotations
+
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from deluge_web_client import DelugeWebClientError
+from deluge_web_client import DelugeWebClientError, TorrentOptions
 from deluge_web_client.client import DelugeWebClient
+from deluge_web_client.schema import Response
 from tests import MockResponse
 
 
-def test_get_labels(client_mock):
+def test_get_labels(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -25,7 +28,7 @@ def test_get_labels(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "label.get_labels"
 
 
-def test_set_label(client_mock):
+def test_set_label(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -47,7 +50,7 @@ def test_set_label(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "label.set_torrent"
 
 
-def test_add_label_success(client_mock):
+def test_add_label_success(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -65,7 +68,7 @@ def test_add_label_success(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "label.add"
 
 
-def test_add_label_already_exists(client_mock):
+def test_add_label_already_exists(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     already_exists_info = {
@@ -93,7 +96,7 @@ def test_add_label_already_exists(client_mock):
     assert mock_post.call_args[1]["json"]["method"] == "label.add"
 
 
-def test_add_label_raises_error(client_mock):
+def test_add_label_raises_error(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -112,7 +115,7 @@ def test_add_label_raises_error(client_mock):
         client.add_label("movies")
 
 
-def test_apply_label(client_mock):
+def test_apply_label(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
 
     # mock the add_label and set_label methods using side_effect to simulate real behavior
@@ -121,11 +124,9 @@ def test_apply_label(client_mock):
             DelugeWebClient,
             "add_label",
             side_effect=(
-                MockResponse(
-                    {"result": None, "error": None, "id": 0},
-                    ok=True,
-                    status_code=200,
-                    reason="test",
+                Response(
+                    result=None,
+                    error=None,
                 ),
             ),
         ) as mock_add_label,
@@ -133,11 +134,9 @@ def test_apply_label(client_mock):
             DelugeWebClient,
             "set_label",
             side_effect=(
-                MockResponse(
-                    {"result": None, "error": None, "id": 1},
-                    ok=True,
-                    status_code=200,
-                    reason="test",
+                Response(
+                    result=None,
+                    error=None,
                 ),
             ),
         ) as mock_set_label,
@@ -156,7 +155,80 @@ def test_apply_label(client_mock):
         mock_set_label.assert_called_once_with(info_hash, label, timeout)
 
     # assert that the responses are as expected
-    assert response_add_label.json().get("result") is None
-    assert response_add_label.json().get("id") == 0
-    assert response_set_label.json().get("result") is None
-    assert response_set_label.json().get("id") == 1
+    assert response_add_label.result is None
+    assert response_set_label.result is None
+
+def test_upload_helper_invalid_json(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+    client, mock_post = client_mock
+
+    # Create a mock response that raises an exception when .json() is called
+    mock_response = MagicMock()
+    mock_response.json.side_effect = ValueError("Invalid JSON")
+    mock_response.text = "Invalid JSON body"
+    mock_response.status_code = 200
+    mock_response.reason = "OK"
+    mock_post.return_value.__enter__.return_value = mock_response
+
+    payload = {"method": "core.add_torrent_file", "params": [], "id": 0}
+    with pytest.raises(DelugeWebClientError, match="Invalid JSON response"):
+        client._upload_helper(payload, label=None, timeout=30)
+
+def test_upload_helper_already_exists(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+    client, mock_post = client_mock
+
+    mock_post.side_effect = (
+        MockResponse(
+            json_data={
+                "result": None,
+                "error": {
+                    "message": "Torrent already in session (1234567890abcdef1234567890abcdef12345678)",
+                    "code": 4,
+                    "class": "deluge.error.AddTorrentError"
+                },
+                "id": 1,
+            },
+            ok=True,
+            status_code=200,
+        ),
+    )
+
+    payload = {"method": "core.add_torrent_file", "params": [], "id": 0}
+    response = client._upload_helper(payload, label=None, timeout=30)
+    assert response.result == "1234567890abcdef1234567890abcdef12345678"
+    assert response.message == "Torrent already exists"
+
+def test_upload_helper_unknown_error(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+    client, mock_post = client_mock
+
+    mock_post.side_effect = (
+        MockResponse(
+            json_data={
+                "result": None,
+                "error": {"message": "Unknown error"},
+                "id": 1,
+            },
+            ok=True,
+            status_code=200,
+        ),
+    )
+
+    payload = {"method": "core.add_torrent_file", "params": [], "id": 0}
+    with pytest.raises(DelugeWebClientError, match="Failed to add torrent"):
+        client._upload_helper(payload, label=None, timeout=30)
+
+def test_add_torrent_file(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
+    # Test for upload_torrent method which is not fully covered
+    client, _ = client_mock
+
+    with (
+        patch("builtins.open", new_callable=MagicMock) as mock_file,
+        patch.object(DelugeWebClient, "_upload_helper", return_value=Response(result="hash", error=None)) as mock_upload
+    ):
+        mock_file.return_value.__enter__.return_value.read.return_value = b"data"
+
+        options = TorrentOptions(label="test")
+        client.upload_torrent("test.torrent", options)
+
+        mock_upload.assert_called_once()
+        args = mock_upload.call_args
+        assert args[0][1] == "test"
