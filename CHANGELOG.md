@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file starting wit
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2025-12-15
+
+### Added
+
+- Added `py.typed` marker file for PEP 561 compliance, allowing the library's type hints to be used by external tools.
+- Added `Typing :: Typed` classifier to project metadata.
+- Added Dependabot configuration for automated dependency updates.
+- Added strict `mypy` configuration for better type safety.
+
+### Changed
+
+- Modernized type annotations throughout the codebase using `from __future__ import annotations` and Python 3.10+ style unions (`|`).
+- Updated development dependencies.
+
+### Fixed
+
+- Fixed potential issues with mutable default arguments in `get_torrent_status`, `get_torrents_status`, and `update_ui`.
+
 ## [2.0.2] - 2025-12-10
 
 ### Added
