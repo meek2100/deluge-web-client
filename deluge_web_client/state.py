@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 
 
 class TorrentState(Enum):
@@ -21,7 +22,7 @@ class TorrentState(Enum):
         return self.value
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: object) -> Any:
         """Override this method to ignore case sensitivity"""
         value = str(value).lower()
         for member in cls:
