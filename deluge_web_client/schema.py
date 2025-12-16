@@ -4,8 +4,8 @@ from typing import Any, NamedTuple, Optional, Union
 class Response(NamedTuple):
     """Object that is filled on each request."""
 
-    result: Union[bool, str, list, dict[str, Any], None] = None
-    error: Union[None, str, dict] = None
+    result: Union[bool, str, list[Any], dict[str, Any], None] = None
+    error: Union[None, str, dict[str, Any]] = None
     message: Optional[str] = None
 
 
