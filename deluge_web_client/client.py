@@ -294,7 +294,9 @@ class DelugeWebClient:
             ):
                 existing_info_hash = parsed.get("info_hash")
                 if existing_info_hash:
-                    return Response(result=existing_info_hash, message="Torrent already exists")
+                    return Response(
+                        result=existing_info_hash, message="Torrent already exists"
+                    )
 
             # all other errors: raise with parsed information
             error_msg = parsed.get("message") or "Unknown error"
