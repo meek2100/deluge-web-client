@@ -508,3 +508,55 @@ def test_set_torrent_trackers(client_mock):
     assert mock_post.called
     assert mock_post.call_count == 1
     assert mock_post.call_args[1]["json"]["method"] == "core.set_torrent_trackers"
+
+
+def test_get_torrents_status_defaults(client_mock):
+    client, mock_post = client_mock
+
+    mock_post.side_effect = (
+        MockResponse(
+            {
+                "result": {},
+                "error": None,
+                "id": 1,
+            },
+            ok=True,
+            status_code=200,
+        ),
+    )
+
+    # Call without arguments to trigger the None -> default replacement logic
+    response = client.get_torrents_status()
+
+    assert response.error is None
+    assert mock_post.called
+    assert mock_post.call_count == 1
+    assert mock_post.call_args[1]["json"]["method"] == "core.get_torrents_status"
+    # Verify defaults were correctly substituted: filter_dict={}, keys=[], diff=False
+    assert mock_post.call_args[1]["json"]["params"] == [{}, [], False]
+
+
+def test_get_torrent_status_defaults(client_mock):
+    client, mock_post = client_mock
+    mock_post.side_effect = (
+        MockResponse({"result": {}, "error": None, "id": 1}, ok=True, status_code=200),
+    )
+    # Call without optional arguments to trigger defaults (lines 272-274)
+    client.get_torrent_status("torrent_id")
+
+    assert mock_post.called
+    # Verify defaults were substituted: keys=[], diff=False
+    assert mock_post.call_args[1]["json"]["params"] == ["torrent_id", [], False]
+
+
+def test_get_torrents_status_defaults(client_mock):
+    client, mock_post = client_mock
+    mock_post.side_effect = (
+        MockResponse({"result": {}, "error": None, "id": 1}, ok=True, status_code=200),
+    )
+    # Call without optional arguments to trigger defaults (lines 295-297)
+    client.get_torrents_status()
+
+    assert mock_post.called
+    # Verify defaults were substituted: filter_dict={}, keys=[], diff=False
+    assert mock_post.call_args[1]["json"]["params"] == [{}, [], False]

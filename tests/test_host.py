@@ -282,3 +282,32 @@ def test_edit_host_failure(client_mock):
 
     response = client.edit_host("invalid_host_id", "user", "pass")
     assert response.result is False
+
+
+def test_update_ui_defaults(client_mock):
+    client, mock_post = client_mock
+    mock_post.side_effect = (
+        MockResponse({"result": {}, "error": None, "id": 1}, ok=True, status_code=200),
+    )
+    # Call without optional arguments to trigger defaults (lines 653-654)
+    client.update_ui()
+
+    assert mock_post.called
+    # Verify defaults were substituted: keys=[], filter_dict={}
+    assert mock_post.call_args[1]["json"]["params"] == [[], {}]
+
+
+def test_find_host_id_by_name_malformed(client_mock):
+    client, _ = client_mock
+
+    # Mock get_hosts to return a malformed list (missing elements) to trigger IndexError (lines 769-771)
+    with patch.object(
+        DelugeWebClient,
+        "get_hosts",
+        return_value=Response(
+            result=[["host_id_1"]],  # Missing name at index 3
+            error=None,
+        ),
+    ):
+        response = client.find_host_id_by_name("localclient")
+        assert response.result is None

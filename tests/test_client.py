@@ -246,3 +246,21 @@ def test_execute_call_with_error(client_mock):
             DelugeWebClientError, match="RPC Error - Method: core.add_torrent_file"
         ):
             client.execute_call(payload)
+
+
+def test_parse_deluge_error_coverage(client_mock):
+    client, _ = client_mock
+
+    # Test 1: Empty error (Line 876)
+    parsed = client._parse_deluge_error(None)
+    assert parsed["message"] is None
+
+    # Test 2: Dict error without 'class' key but with message matching regex (Lines 886-887)
+    err_dict = {"message": "<class 'deluge.error.TestError'>: Test Message"}
+    parsed = client._parse_deluge_error(err_dict)
+    assert parsed["class"] == "deluge.error.TestError"
+
+    # Test 3: String error matching regex (Line 897)
+    err_str = "<class 'deluge.error.StringError'>: String Message"
+    parsed = client._parse_deluge_error(err_str)
+    assert parsed["class"] == "deluge.error.StringError"
