@@ -1,4 +1,6 @@
-from unittest.mock import patch
+from __future__ import annotations
+
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -7,7 +9,7 @@ from deluge_web_client.client import DelugeWebClient
 from tests import MockResponse
 
 
-def test_failure_to_connect(client_mock):
+def test_failure_to_connect(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
@@ -21,7 +23,9 @@ def test_failure_to_connect(client_mock):
         client.login()
 
 
-def test_successful_login_and_host_connection(client_mock):
+def test_successful_login_and_host_connection(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, _ = client_mock
 
     # Mock execute_call for login
@@ -73,7 +77,7 @@ def test_successful_login_and_host_connection(client_mock):
         assert mock_check_connected.call_count == 2
 
 
-def test_login_failure(client_mock):
+def test_login_failure(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     # Mock the login attempt to return a failure response
@@ -93,7 +97,7 @@ def test_login_failure(client_mock):
         mock_attempt_login.assert_called_once()
 
 
-def test_already_connected(client_mock):
+def test_already_connected(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     # Mock login success and already connected response
@@ -123,7 +127,9 @@ def test_already_connected(client_mock):
         mock_check_connected.assert_called_once()
 
 
-def test_host_connection_failure(client_mock):
+def test_host_connection_failure(
+    client_mock: tuple[DelugeWebClient, MagicMock],
+) -> None:
     client, mock_post = client_mock
 
     # Mock the login success
@@ -165,15 +171,13 @@ def test_host_connection_failure(client_mock):
         )  # Connect to the first host
 
 
-def test_close_session(client_mock):
+def test_close_session(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, _ = client_mock
 
-    response = client.close_session()
-
-    assert response is None
+    client.close_session()
 
 
-def test_disconnect(client_mock):
+def test_disconnect(client_mock: tuple[DelugeWebClient, MagicMock]) -> None:
     client, mock_post = client_mock
 
     mock_post.side_effect = (
